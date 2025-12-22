@@ -328,6 +328,70 @@ def test_get_running_time():
     expected = "14h 49m 27s"
     assert extracted == expected, f"Expected {expected}, but got {extracted}"
 
+
+def test_get_running_time_missing():
+    """Test that missing actualRunningTime returns appropriate warning."""
+    experiment = {"name": "Test"}
+    extracted = mp.get_running_time(experiment)
+    expected = "N/A (missing)"
+    assert extracted == expected, f"Expected {expected}, but got {extracted}"
+
+
+def test_get_running_time_zero():
+    """Test that zero actualRunningTime returns appropriate warning."""
+    experiment = {"actualRunningTime": 0}
+    extracted = mp.get_running_time(experiment)
+    expected = "0h 0m 0s (check data)"
+    assert extracted == expected, f"Expected {expected}, but got {extracted}"
+
+
+def test_get_elapsed_time():
+    """Test that elapsed time is calculated correctly from start/end times."""
+    extracted = mp.get_elapsed_time(data['experiments'][0])
+    # Start: 2025-01-28T15:53:36Z, End: 2025-01-29T06:43:08Z
+    # Difference: 14h 49m 32s
+    expected = "14h 49m 32s"
+    assert extracted == expected, f"Expected {expected}, but got {extracted}"
+
+
+def test_get_elapsed_time_missing_start():
+    """Test that missing start time returns appropriate warning."""
+    experiment = {"executionEndDateTime": "2025-01-29T06:43:08Z"}
+    extracted = mp.get_elapsed_time(experiment)
+    expected = "N/A (missing start)"
+    assert extracted == expected, f"Expected {expected}, but got {extracted}"
+
+
+def test_get_elapsed_time_missing_end():
+    """Test that missing end time returns appropriate warning."""
+    experiment = {"executionStartDateTime": "2025-01-28T15:53:36Z"}
+    extracted = mp.get_elapsed_time(experiment)
+    expected = "N/A (missing end)"
+    assert extracted == expected, f"Expected {expected}, but got {extracted}"
+
+
+def test_get_elapsed_time_invalid_format():
+    """Test that invalid datetime format returns appropriate warning."""
+    experiment = {
+        "executionStartDateTime": "not-a-date",
+        "executionEndDateTime": "2025-01-29T06:43:08Z"
+    }
+    extracted = mp.get_elapsed_time(experiment)
+    expected = "N/A (parse error)"
+    assert extracted == expected, f"Expected {expected}, but got {extracted}"
+
+
+def test_get_elapsed_time_end_before_start():
+    """Test that end time before start time returns appropriate warning."""
+    experiment = {
+        "executionStartDateTime": "2025-01-29T06:43:08Z",
+        "executionEndDateTime": "2025-01-28T15:53:36Z"
+    }
+    extracted = mp.get_elapsed_time(experiment)
+    expected = "N/A (invalid times)"
+    assert extracted == expected, f"Expected {expected}, but got {extracted}"
+
+
 def test_get_used_disk_space():
     """Test that the used disk space is extracted correctly."""
     extracted = mp.get_used_disk_space(data['experiments'][0])
