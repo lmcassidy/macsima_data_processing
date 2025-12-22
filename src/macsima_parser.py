@@ -158,11 +158,55 @@ def convert_seconds_to_hms(seconds)-> Tuple[int, int, int]:
     return hours, minutes, sec_left
 
 def get_running_time(experiment: dict[str, Any]) -> str:
-    """Returns the experiment running time."""
-    actual_running_time_s = experiment.get('actualRunningTime', 0)
+    """
+    Returns the experiment's actual running time from the actualRunningTime field.
+
+    This is the machine-reported runtime which may exclude pauses.
+    Returns a warning string if the field is missing or zero.
+    """
+    actual_running_time_s = experiment.get('actualRunningTime')
+    if actual_running_time_s is None:
+        logger.warning("actualRunningTime field is missing from experiment data")
+        return "N/A (missing)"
+    if actual_running_time_s == 0:
+        logger.warning("actualRunningTime is zero - this may indicate missing data")
+        return "0h 0m 0s (check data)"
     h, m, s = convert_seconds_to_hms(actual_running_time_s)
     runtime_str = f"{h}h {m}m {s}s"
     return runtime_str
+
+
+def get_elapsed_time(experiment: dict[str, Any]) -> str:
+    """
+    Calculate elapsed wall-clock time from executionStartDateTime to executionEndDateTime.
+
+    This is the total time from start to end, including any pauses.
+    Returns a warning string if either datetime field is missing or invalid.
+    """
+    start_raw = experiment.get('executionStartDateTime')
+    end_raw = experiment.get('executionEndDateTime')
+
+    if not start_raw:
+        logger.warning("executionStartDateTime field is missing from experiment data")
+        return "N/A (missing start)"
+    if not end_raw:
+        logger.warning("executionEndDateTime field is missing from experiment data")
+        return "N/A (missing end)"
+
+    try:
+        start_dt = datetime.fromisoformat(start_raw.replace("Z", "+00:00"))
+        end_dt = datetime.fromisoformat(end_raw.replace("Z", "+00:00"))
+
+        elapsed_seconds = int((end_dt - start_dt).total_seconds())
+        if elapsed_seconds < 0:
+            logger.warning("Negative elapsed time calculated - end time is before start time")
+            return "N/A (invalid times)"
+
+        h, m, s = convert_seconds_to_hms(elapsed_seconds)
+        return f"{h}h {m}m {s}s"
+    except (ValueError, AttributeError) as e:
+        logger.warning(f"Error parsing datetime fields: {e}")
+        return "N/A (parse error)"
 
 
 def get_used_disk_space(experiment: dict) -> str:
@@ -527,11 +571,18 @@ def get_antigen_clone_by_reagent_id(reagent_uuid: str,
     return None
 
 def process_experiment(experiment: dict[str, Any]) -> dict[str, Any]:
+    """
+    Process experiment data and return formatted dictionary.
+
+    RunningTime: Machine-reported runtime (may exclude pauses)
+    ElapsedTime: Wall-clock time from start to end (includes pauses)
+    """
     return format_dict_headers({
         "ExperimentName":  get_experiment_name(experiment),
         "StartTime":       get_start_time(experiment),
         "EndTime":         get_end_time(experiment),
         "RunningTime":     get_running_time(experiment),
+        "ElapsedTime":     get_elapsed_time(experiment),
         "UsedDiskSpace":   get_used_disk_space(experiment),
     })
 
