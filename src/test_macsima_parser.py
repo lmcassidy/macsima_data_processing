@@ -1485,3 +1485,193 @@ def test_flask_error_message_function():
     except ImportError:
         # Skip this test if Flask dependencies are not available
         pytest.skip("Flask dependencies not available for testing")
+
+
+# --------------------------------------------------
+# Multiple procedures tests (Issue #16)
+# --------------------------------------------------
+
+def test_sanitise_sheet_name_basic():
+    """Test that sanitise_sheet_name handles basic cases correctly."""
+    # Normal name
+    assert mp.sanitise_sheet_name("Standard procedure") == "Standard procedure"
+
+    # Name with invalid characters
+    assert mp.sanitise_sheet_name("Proc/with\\invalid:chars?") == "Proc_with_invalid_chars_"
+
+    # Name with square brackets and asterisk
+    assert mp.sanitise_sheet_name("Proc[1]*test") == "Proc_1__test"
+
+
+def test_sanitise_sheet_name_length():
+    """Test that sanitise_sheet_name truncates long names to 31 characters."""
+    long_name = "This is a very long procedure name that exceeds the Excel limit"
+    result = mp.sanitise_sheet_name(long_name)
+    assert len(result) <= 31
+    assert result == "This is a very long procedure n"
+
+
+def test_sanitise_sheet_name_empty():
+    """Test that sanitise_sheet_name handles empty and blank names."""
+    assert mp.sanitise_sheet_name("") == "Procedure"
+    assert mp.sanitise_sheet_name("   ") == "Procedure"
+    assert mp.sanitise_sheet_name(None) == "Procedure"
+
+
+def test_sanitise_sheet_name_custom_max_length():
+    """Test that sanitise_sheet_name respects custom max_length."""
+    name = "This is a test name"
+    result = mp.sanitise_sheet_name(name, max_length=10)
+    assert len(result) <= 10
+    assert result == "This is a "
+
+
+def test_process_all_procedures_single():
+    """Test process_all_procedures with a single procedure."""
+    bucket_lookup = mp.build_bucket_lookup(data)
+    result = mp.process_all_procedures(data, bucket_lookup)
+
+    # Should return a dictionary with one entry
+    assert isinstance(result, dict)
+    assert len(result) == 1
+
+    # Key should be the procedure name
+    assert "Standard procedure" in result
+
+    # Value should be a list of block rows
+    block_rows = result["Standard procedure"]
+    assert isinstance(block_rows, list)
+    assert len(block_rows) > 0
+
+
+def test_process_all_procedures_multiple():
+    """Test process_all_procedures with multiple procedures."""
+    # Create data with multiple procedures
+    multi_proc_data = {
+        "experiments": data["experiments"],
+        "racks": data["racks"],
+        "rois": data["rois"],
+        "samples": data["samples"],
+        "reagents": data["reagents"],
+        "procedures": [
+            {
+                "comment": "Procedure A",
+                "blocks": [
+                    {"blockType": "ProtocolBlockType_Scan", "magnification": "Magnification_2x"},
+                ]
+            },
+            {
+                "comment": "Procedure B",
+                "blocks": [
+                    {"blockType": "ProtocolBlockType_Scan", "magnification": "Magnification_20x"},
+                ]
+            },
+            {
+                "comment": "Procedure C",
+                "blocks": [
+                    {"blockType": "ProtocolBlockType_Scan", "magnification": "Magnification_40x"},
+                ]
+            }
+        ]
+    }
+
+    bucket_lookup = mp.build_bucket_lookup(multi_proc_data)
+    result = mp.process_all_procedures(multi_proc_data, bucket_lookup)
+
+    # Should return a dictionary with three entries
+    assert isinstance(result, dict)
+    assert len(result) == 3
+
+    # Keys should be the procedure names
+    assert "Procedure A" in result
+    assert "Procedure B" in result
+    assert "Procedure C" in result
+
+
+def test_process_all_procedures_duplicate_names():
+    """Test process_all_procedures handles duplicate procedure names."""
+    # Create data with duplicate procedure names
+    dup_proc_data = {
+        "experiments": data["experiments"],
+        "racks": data["racks"],
+        "rois": data["rois"],
+        "samples": data["samples"],
+        "reagents": data["reagents"],
+        "procedures": [
+            {
+                "comment": "Same Name",
+                "blocks": [
+                    {"blockType": "ProtocolBlockType_Scan", "magnification": "Magnification_2x"},
+                ]
+            },
+            {
+                "comment": "Same Name",
+                "blocks": [
+                    {"blockType": "ProtocolBlockType_Scan", "magnification": "Magnification_20x"},
+                ]
+            },
+            {
+                "comment": "Same Name",
+                "blocks": [
+                    {"blockType": "ProtocolBlockType_Scan", "magnification": "Magnification_40x"},
+                ]
+            }
+        ]
+    }
+
+    bucket_lookup = mp.build_bucket_lookup(dup_proc_data)
+    result = mp.process_all_procedures(dup_proc_data, bucket_lookup)
+
+    # Should return a dictionary with three unique entries
+    assert isinstance(result, dict)
+    assert len(result) == 3
+
+    # Keys should be unique with numeric suffixes
+    assert "Same Name" in result
+    assert "Same Name (2)" in result
+    assert "Same Name (3)" in result
+
+
+def test_process_all_procedures_empty():
+    """Test process_all_procedures with no procedures."""
+    empty_proc_data = {
+        "experiments": data["experiments"],
+        "racks": data["racks"],
+        "rois": data["rois"],
+        "samples": data["samples"],
+        "reagents": data["reagents"],
+        "procedures": []
+    }
+
+    bucket_lookup = mp.build_bucket_lookup(empty_proc_data)
+    result = mp.process_all_procedures(empty_proc_data, bucket_lookup)
+
+    # Should return an empty dictionary
+    assert isinstance(result, dict)
+    assert len(result) == 0
+
+
+def test_process_all_procedures_missing_comment():
+    """Test process_all_procedures handles procedures without comments."""
+    no_comment_data = {
+        "experiments": data["experiments"],
+        "racks": data["racks"],
+        "rois": data["rois"],
+        "samples": data["samples"],
+        "reagents": data["reagents"],
+        "procedures": [
+            {
+                "blocks": [
+                    {"blockType": "ProtocolBlockType_Scan", "magnification": "Magnification_2x"},
+                ]
+            }
+        ]
+    }
+
+    bucket_lookup = mp.build_bucket_lookup(no_comment_data)
+    result = mp.process_all_procedures(no_comment_data, bucket_lookup)
+
+    # Should return a dictionary with one entry using the default name
+    assert isinstance(result, dict)
+    assert len(result) == 1
+    assert "Unknown procedure" in result

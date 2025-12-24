@@ -122,8 +122,44 @@ def get_experiment_name(experiment: dict[str, Any]) -> str:
 
 def get_procedure_name(procedure: dict[str, Any]) -> str:
     """Returns the procedure name."""
-    # NOTE: assume only one procedure in the file
     return procedure.get("comment", "Unknown procedure")
+
+
+def sanitise_sheet_name(name: str, max_length: int = 31) -> str:
+    """
+    Sanitise a string for use as an Excel sheet name.
+
+    Excel sheet names have these restrictions:
+    - Maximum 31 characters
+    - Cannot contain: \\ / ? * [ ] :
+    - Cannot be blank
+
+    Parameters
+    ----------
+    name : str
+        The raw name to sanitise.
+    max_length : int
+        Maximum length for the sheet name (default 31).
+
+    Returns
+    -------
+    str
+        A valid Excel sheet name.
+    """
+    if not name or not name.strip():
+        return "Procedure"
+
+    # Remove invalid characters
+    invalid_chars = ['\\', '/', '?', '*', '[', ']', ':']
+    sanitised = name
+    for char in invalid_chars:
+        sanitised = sanitised.replace(char, '_')
+
+    # Trim to max length
+    if len(sanitised) > max_length:
+        sanitised = sanitised[:max_length]
+
+    return sanitised.strip() or "Procedure"
 
 def get_rack_name(rack: list[dict[str, Any]]) -> str:
     """Returns the rack name."""
@@ -698,6 +734,61 @@ def process_block(block: dict[str, Any],
     return rows
 
 
+def process_all_procedures(data: dict[str, Any], bucket_lookup: dict[str, Any]) -> Dict[str, list[dict]]:
+    """
+    Process all procedures and return a dictionary keyed by procedure name.
+
+    Each procedure's blocks are processed and stored under a unique key.
+    If multiple procedures have the same name, a numeric suffix is added.
+
+    Parameters
+    ----------
+    data : dict
+        The loaded JSON data containing procedures.
+    bucket_lookup : dict
+        The bucket-to-reagent lookup table.
+
+    Returns
+    -------
+    Dict[str, list[dict]]
+        A dictionary where keys are sanitised procedure names and values
+        are lists of processed block rows.
+    """
+    procedures_dict: Dict[str, list[dict]] = {}
+    name_counts: Dict[str, int] = {}
+
+    for proc in data.get("procedures", []):
+        # Get the procedure name
+        raw_name = get_procedure_name(proc)
+        base_name = sanitise_sheet_name(raw_name)
+
+        # Handle duplicate names by adding a numeric suffix
+        if base_name in name_counts:
+            name_counts[base_name] += 1
+            # Ensure the suffix fits within Excel's 31 char limit
+            suffix = f" ({name_counts[base_name]})"
+            max_base_len = 31 - len(suffix)
+            unique_name = sanitise_sheet_name(base_name, max_base_len) + suffix
+        else:
+            name_counts[base_name] = 1
+            unique_name = base_name
+
+        # Process the procedure's blocks
+        blocks = add_numbers_to_run_cycles(proc.get("blocks", []))
+        blocks = propagate_magnification(blocks)
+
+        block_rows: list[dict] = []
+        for b in blocks:
+            block_rows.extend(process_block(b, bucket_lookup))
+
+        # Add blank lines between different run cycles
+        block_rows = add_blank_lines_between_run_cycles(block_rows)
+
+        procedures_dict[unique_name] = block_rows
+
+    return procedures_dict
+
+
 if __name__ == "__main__":
     json_path = get_input_path()
     logger.info(f"Loading JSON: {json_path}")
@@ -710,17 +801,8 @@ if __name__ == "__main__":
     roi_rows    = [process_rois(r)       for r in data["rois"]]
     sample_rows = [process_sample(s)     for s in data["samples"]]
 
-    block_rows: list[dict] = []
-    for proc in data["procedures"]:
-        # add run-cycle numbers once
-        blocks = add_numbers_to_run_cycles(proc["blocks"])
-        # propagate magnification through the block list
-        blocks = propagate_magnification(blocks)
-        for b in blocks:
-            block_rows.extend(process_block(b, bucket_lookup))
-
-    # Add blank lines between different run cycles
-    block_rows = add_blank_lines_between_run_cycles(block_rows)
+    # Process all procedures into a dictionary keyed by procedure name
+    procedures_dict = process_all_procedures(data, bucket_lookup)
 
     # ---------- to Excel ---------------------------------------
     out_xlsx = json_path.with_suffix(".xlsx")
@@ -733,8 +815,9 @@ if __name__ == "__main__":
         pd.DataFrame(roi_rows   ).to_excel(xls, sheet_name="ROIs",       index=False)
         pd.DataFrame(sample_rows).to_excel(xls, sheet_name="Samples",    index=False)
 
-        # big table of all blocks & channels
-        pd.DataFrame(block_rows ).to_excel(xls, sheet_name="Blocks",     index=False)
+        # Write each procedure to its own sheet
+        for proc_name, block_rows in procedures_dict.items():
+            pd.DataFrame(block_rows).to_excel(xls, sheet_name=proc_name, index=False)
 
     logger.info("✅ Excel report created successfully.")
     logger.info(f"📊 Excel report saved to: {out_xlsx}")
