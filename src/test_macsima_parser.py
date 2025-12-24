@@ -1430,7 +1430,7 @@ def test_missing_key_fields_trigger_keyerror():
 
         # But processing experiments should fail
         with pytest.raises(KeyError):
-            exp_rows = [mp.process_experiment(e) for e in data["experiments"]]
+            _ = [mp.process_experiment(e) for e in data["experiments"]]
 
     # Test file missing experiments field
     missing_exp_file = "../data/test-samples/missing_experiments.json"
