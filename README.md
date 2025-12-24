@@ -2,6 +2,7 @@
 
 **MACSima Parser** helps you turn experiment data from a MACSima imaging run (in `.json` format) into a clear Excel file you can open in Excel, Google Sheets, or similar tools.
 You do not need to know Python to use this tool!
+Try the UI here: [https://macsima-parser.onrender.com/](https://macsima-parser.onrender.com/)
 
 ---
 
