@@ -26,8 +26,10 @@ logger = logging.getLogger(__name__)
 
 ALLOWED_EXTENSIONS = {'json'}
 
+
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
 
 def get_user_friendly_error_message(exception, filename):
     """Convert technical exceptions into user-friendly error messages"""
@@ -73,6 +75,7 @@ def get_user_friendly_error_message(exception, filename):
         # For unknown errors, provide a generic but helpful message
         return f"An unexpected error occurred while processing '{filename}'. The file may be corrupted or in an unsupported format. Please check the JSON structure and data types."
 
+
 def process_json_to_excel(json_file_path):
     """Process JSON file and return Excel file path"""
     logger.info(f"Processing JSON file: {json_file_path}")
@@ -106,9 +109,11 @@ def process_json_to_excel(json_file_path):
     logger.info(f"Excel report created successfully: {excel_path}")
     return str(excel_path)
 
+
 @app.route('/')
 def index():
     return render_template('index.html')
+
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
@@ -184,6 +189,7 @@ def upload_file():
             'error': True,
             'message': 'Invalid file type. Please upload a JSON file.'
         }), 400
+
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)

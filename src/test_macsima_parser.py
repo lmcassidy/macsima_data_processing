@@ -291,17 +291,20 @@ data = dummy_data
 # Experiment tests
 # --------------------------------------------------
 
+
 def test_get_experiment_name():
     """Test that the experiment name is extracted correctly."""
     extracted = mp.get_experiment_name(data['experiments'][0])
     expected = "250128_liver_OCT_FCRB 1"
     assert extracted == expected, f"Expected {expected}, but got {extracted}"
 
+
 def test_get_procedure_name():
     """Test that the procedure name is extracted correctly."""
     extracted = mp.get_procedure_name(data['procedures'][0])
     expected = "Standard procedure"
     assert extracted == expected, f"Expected {expected}, but got {extracted}"
+
 
 def test_get_rack_name():
     """Test that the rack name extracted correctly."""
@@ -310,17 +313,20 @@ def test_get_rack_name():
     # TODO: make sure this works with multiple racks
     assert extracted == expected, f"Expected {expected}, but got {extracted}"
 
+
 def test_get_start_time():
     """Test that the start time is extracted correctly."""
     extracted = mp.get_start_time(data['experiments'][0])
     expected = "2025-01-28T15:53:36Z"
     assert extracted == expected, f"Expected {expected}, but got {extracted}"
 
+
 def test_get_end_time():
     """Test that the end time is extracted correctly."""
     extracted = mp.get_end_time(data['experiments'][0])
     expected = "2025-01-29T06:43:08Z"
     assert extracted == expected, f"Expected {expected}, but got {extracted}"
+
 
 def test_get_running_time():
     """Test that the running time is extracted correctly."""
@@ -412,6 +418,7 @@ def test_get_roi_name():
     expected = "ROI 1"
     assert extracted == expected, f"Expected {expected}, but got {extracted}"
 
+
 def test_get_roi_shape_type():
     """Test that the ROI shape type is extracted correctly."""
     extracted = mp.get_roi_shape_type(data['rois'][0])
@@ -420,6 +427,7 @@ def test_get_roi_shape_type():
     extracted = mp.get_roi_shape_type(data['rois'][1])
     expected = "Rectangle"
     assert extracted == expected, f"Expected {expected}, but got {extracted}"
+
 
 def test_get_roi_shape_height():
     """Test that the ROI shape height is extracted correctly."""
@@ -430,6 +438,7 @@ def test_get_roi_shape_height():
     expected = "2.350855833425806"
     assert extracted == expected, f"Expected {expected}, but got {extracted}"
 
+
 def test_get_roi_shape_width():
     """Test that the ROI shape width is extracted correctly."""
     extracted = mp.get_roi_shape_width(data['rois'][0])
@@ -438,6 +447,7 @@ def test_get_roi_shape_width():
     extracted = mp.get_roi_shape_width(data['rois'][1])
     expected = "2.6345827695784165"
     assert extracted == expected, f"Expected {expected}, but got {extracted}"
+
 
 def test_get_autofocus_method():
     """Test that the autofocus method is extracted correctly."""
@@ -452,11 +462,13 @@ def test_get_autofocus_method():
 # Sample tests
 # --------------------------------------------------
 
+
 def test_get_sample_name():
     """Test that the sample name is extracted correctly."""
     extracted = mp.get_sample_name(data['samples'][0])
     expected = "250128_liver_OCT_FCRB"
     assert extracted == expected, f"Expected {expected}, but got {extracted}"
+
 
 def test_get_sample_species():
     """Test that the sample species is extracted correctly."""
@@ -464,17 +476,20 @@ def test_get_sample_species():
     expected = "Human"
     assert extracted == expected, f"Expected {expected}, but got {extracted}"
 
+
 def test_get_sample_type():
     """Test that the sample type is extracted correctly."""
     extracted = mp.get_sample_type(data['samples'][0])
     expected = "Tissue"
     assert extracted == expected, f"Expected {expected}, but got {extracted}"
 
+
 def test_get_sample_organ():
     """Test that the sample organ is extracted correctly."""
     extracted = mp.get_sample_organ(data['samples'][0])
     expected = "Liver"
     assert extracted == expected, f"Expected {expected}, but got {extracted}"
+
 
 def test_get_sample_fixation_method():
     """Test that the sample fixation method is extracted correctly."""
@@ -485,6 +500,7 @@ def test_get_sample_fixation_method():
 # --------------------------------------------------
 # Procedure block tests
 # --------------------------------------------------
+
 
 def test_get_run_cycle_number():
     """Test that the run cycle number is extracted correctly."""
@@ -499,6 +515,7 @@ def test_get_run_cycle_number():
     extracted = mp.get_run_cycle_number(blocks_with_run_cycle_numbers[7])
     expected = 3
     assert extracted == expected, f"Expected {expected}, but got {extracted}"
+
 
 def test_get_block_type():
     """Test that the block type is extracted correctly."""
@@ -521,6 +538,7 @@ def test_get_block_type():
     expected = "RunCycle"
     assert extracted == expected, f"Expected {expected}, but got {extracted}"
 
+
 def test_get_block_name():
     """Test that the block name is extracted correctly."""
     extracted = mp.get_block_name(data['procedures'][0]['blocks'][0])
@@ -541,6 +559,7 @@ def test_get_block_name():
     extracted = mp.get_block_name(data['procedures'][0]['blocks'][5])
     expected = "Run Cycle"
     assert extracted == expected, f"Expected {expected}, but got {extracted}"
+
 
 def test_get_block_magnification():
     """Test that the block magnification is extracted correctly."""
@@ -588,17 +607,19 @@ def test_get_block_magnification_with_none():
     expected = "N/A"
     assert extracted == expected, f"Expected {expected}, but got {extracted}"
 
+
 def test_get_erase_bleaching_energy():
     """Test that the bleaching energy per channel for erase block is extracted correctly."""
     extracted = mp.get_erase_bleaching_energy(data['procedures'][0]['blocks'][3])
-    expected = [{"Channel": "FITC", "bleachingEnergy": 1980}, { "Channel": "PE", "bleachingEnergy": 840,}, {"Channel": "APC", "bleachingEnergy": 780,}]
+    expected = [{"Channel": "FITC", "bleachingEnergy": 1980}, {"Channel": "PE", "bleachingEnergy": 840, }, {"Channel": "APC", "bleachingEnergy": 780, }]
     # TODO: make sure data types are defined
     assert extracted == expected, f"Expected {expected}, but got {extracted}"
+
 
 def test_get_run_cycle_channel_info():
     """Test that the run cycle channel info is extracted correctly."""
     bucket_lookup = mp.build_bucket_lookup(data)
-    block         = data['procedures'][0]['blocks'][5]
+    block = data['procedures'][0]['blocks'][5]
     extracted = mp.get_run_cycle_channel_info(
         block,
         bucket_lookup=bucket_lookup,
@@ -865,6 +886,8 @@ def test_propagate_magnification():
 # --------------------------------------------------
 # Pure‑function unit tests
 # --------------------------------------------------
+
+
 @pytest.mark.parametrize(
     "seconds, expected",
     [(0, (0, 0, 0)), (1, (0, 0, 1)), (61, (0, 1, 1)), (3661, (1, 1, 1))],
@@ -877,6 +900,7 @@ def test_load_json(sample_json_file):
     data = mp.load_json(sample_json_file)
     # Minimal sanity check
     assert data["experiments"][0]["name"] == "Exp‑1"
+
 
 def test_add_numbers_to_run_cycles():
     """Test for adding numbers to run cycles."""
@@ -1415,7 +1439,7 @@ def test_missing_key_fields_trigger_keyerror():
 
         # But accessing experiments should fail
         with pytest.raises(KeyError):
-            exp_rows = [mp.process_experiment(e) for e in data["experiments"]]
+            _ = [mp.process_experiment(e) for e in data["experiments"]]
 
     # Test file missing procedures field
     missing_proc_file = "../data/test-samples/missing_procedures.json"
@@ -1424,7 +1448,7 @@ def test_missing_key_fields_trigger_keyerror():
 
         # But accessing procedures should fail
         with pytest.raises(KeyError):
-            blocks = data["procedures"]
+            _ = data["procedures"]
 
 
 def test_valid_sample_files_process_successfully():

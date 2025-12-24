@@ -56,10 +56,10 @@ def add_blank_lines_between_run_cycles(block_rows: list[dict]) -> list[dict]:
         current_run_cycle = row.get(format_column_header("RunCycleNumber"), "")
 
         # If this is a new run cycle (and not the first row), add a blank line
-        if (prev_run_cycle is not None and
-            current_run_cycle != "" and
-            current_run_cycle != prev_run_cycle and
-            prev_run_cycle != ""):
+        if (prev_run_cycle is not None
+            and current_run_cycle != ""
+            and current_run_cycle != prev_run_cycle
+                and prev_run_cycle != ""):
 
             # Create a blank row with the same keys but empty values
             blank_row = {key: "" for key in row.keys()}
@@ -88,6 +88,7 @@ def get_input_path() -> Path:
     if not path.exists():
         raise FileNotFoundError(f"No such file: {path}")
     return path
+
 
 def load_json(json_file: JsonFile) -> Any:
     """
@@ -163,9 +164,11 @@ def sanitise_sheet_name(name: str, max_length: int = 31) -> str:
 
     return sanitised.strip() or "Procedure"
 
+
 def get_rack_name(rack: dict[str, Any]) -> str:
     """Returns the rack name."""
     return rack.get("name", "Unknown rack")
+
 
 def get_start_time(experiment: dict) -> str:
     """Return the experiment's start time as an RFC 3339 string with 'Z'."""
@@ -178,6 +181,7 @@ def get_start_time(experiment: dict) -> str:
     # Force UTC and format with a literal 'Z'
     return dt.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
+
 def get_end_time(experiment: dict[str]) -> str:
     """Returns the experiment end time."""
     raw: str = experiment.get("executionEndDateTime", "Unknown end time")
@@ -188,12 +192,14 @@ def get_end_time(experiment: dict[str]) -> str:
     # Force UTC and format with a literal 'Z'
     return dt.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
-def convert_seconds_to_hms(seconds)-> Tuple[int, int, int]:
+
+def convert_seconds_to_hms(seconds) -> Tuple[int, int, int]:
     """Convert total seconds to (hours, minutes, seconds)."""
     hours = seconds // 3600
     minutes = (seconds % 3600) // 60
     sec_left = seconds % 60
     return hours, minutes, sec_left
+
 
 def get_running_time(experiment: dict[str, Any]) -> str:
     """
@@ -267,9 +273,11 @@ def get_used_disk_space(experiment: dict) -> str:
 # ROI helper functions
 # --------------------------------------------------
 
+
 def get_roi_name(roi: dict[str, Any]) -> str:
     """Returns the ROI name."""
     return roi.get("name", "Unknown ROI")
+
 
 def get_roi_shape_type(roi: dict[str, Any]) -> str:
     """return the ROI shape type."""
@@ -278,6 +286,7 @@ def get_roi_shape_type(roi: dict[str, Any]) -> str:
     # remove prefix "ShapeType_"
     shape_type = shape_type.replace("ShapeType_", "")
     return shape_type
+
 
 def get_roi_shape_height(roi):
     """Returns the ROI shape height."""
@@ -321,6 +330,7 @@ def get_roi_shape_height(roi):
         logger.warning(f"Error decoding JSON or accessing height: {e}")
     return str(height)
 
+
 def get_roi_shape_width(roi):
     """Returns the ROI shape width."""
     try:
@@ -363,6 +373,7 @@ def get_roi_shape_width(roi):
         logger.warning(f"Error decoding JSON or accessing width: {e}")
     return str(width)
 
+
 def get_autofocus_method(roi: dict[str, Any]) -> str:
     """Returns the autofocus method."""
     autofocus_method = roi.get("autoFocus", "Unknown autofocus method").get("method", "Unknown autofocus method")
@@ -378,9 +389,11 @@ def get_sample_name(sample: dict[str, Any]) -> str:
     """Return sample name."""
     return sample.get("name", "Unknown sample")
 
+
 def get_sample_species(sample: dict[str, Any]) -> str:
     """Return sample species."""
     return sample.get("species", "Unknown species")
+
 
 def get_sample_type(sample: dict[str, Any]) -> str:
     """Return sample type."""
@@ -389,9 +402,11 @@ def get_sample_type(sample: dict[str, Any]) -> str:
     sample_type = sample_type.replace("SampleType_", "")
     return sample_type
 
+
 def get_sample_organ(sample: dict[str, Any]) -> str:
     """Return sample organ."""
     return sample.get("organ", "Unknown organ")
+
 
 def get_sample_fixation_method(sample: dict[str, Any]) -> str:
     """Return sample fixation method."""
@@ -400,6 +415,7 @@ def get_sample_fixation_method(sample: dict[str, Any]) -> str:
 # --------------------------------------------------
 # Procedure block functions
 # --------------------------------------------------
+
 
 def add_numbers_to_run_cycles(blocks: dict[str, Any]) -> dict[str, Any]:
     """Add numbers to run cycles."""
@@ -413,10 +429,12 @@ def add_numbers_to_run_cycles(blocks: dict[str, Any]) -> dict[str, Any]:
         updated_blocks.append(block)
     return updated_blocks
 
+
 def get_run_cycle_number(block: dict[str, Any]) -> int:
     """Return the run cycle number."""
     logger.debug(f"Block keys: {block.keys()}")
     return block.get("runCycleNumber", "Unknown run cycle number")
+
 
 def get_block_type(block: dict[str, Any]) -> str:
     """Return the block type."""
@@ -426,9 +444,11 @@ def get_block_type(block: dict[str, Any]) -> str:
         block_type = block_type.replace("ProtocolBlockType_", "")
     return block_type
 
+
 def get_block_name(block: dict[str, Any]) -> str:
     """Return the block name."""
     return block.get("name", "Unknown block name")
+
 
 def get_block_magnification(block: dict[str, Any]) -> str:
     """Return the block magnification with 'Magnification_' prefix removed."""
@@ -437,6 +457,7 @@ def get_block_magnification(block: dict[str, Any]) -> str:
     if magnification is not None and magnification != "N/A" and magnification.startswith("Magnification_"):
         return magnification.replace("Magnification_", "")
     return magnification if magnification is not None else "N/A"
+
 
 def get_erase_bleaching_energy(block: dict[str, Any]) -> list[dict[str, Any]] | str:
     if block.get("blockType") != "ProtocolBlockType_Erase":
@@ -455,6 +476,7 @@ def get_erase_bleaching_energy(block: dict[str, Any]) -> list[dict[str, Any]] | 
             results.append({"Channel": label, "bleachingEnergy": energy})
 
     return results if results else "N/A"
+
 
 def get_erase_channel_info(block: dict[str, Any]) -> list[dict]:
     """
@@ -553,26 +575,26 @@ def build_bucket_lookup(data: dict) -> Dict[str, Dict[str, Any]]:
     bucket_to_reagent_id: Dict[str, str] = {}
     for proc in data.get("procedures", []):
         for link in proc.get("reagents", []):
-            bid  = link.get("bucketId")
-            rid  = link.get("reagentId", {}).get("itemId")
+            bid = link.get("bucketId")
+            rid = link.get("reagentId", {}).get("itemId")
             if bid and rid:
                 bucket_to_reagent_id[bid] = rid
 
     #  map reagent UUID ➜ metadata (comes from the global catalogue)
     catalogue: Dict[str, Dict[str, Any]] = {
         r["id"]: {
-            "antigen":      r.get("antigen",  "Unknown"),
-            "clone":        r.get("clone",    "N/A"),
+            "antigen": r.get("antigen", "Unknown"),
+            "clone": r.get("clone", "N/A"),
             "exposureTime": r.get("exposureTime", 0),
             "supportedFixationMethods": r.get("supportedFixationMethods", ""),
-            "Antibody":         r.get("antibody", ""),
-            "AntibodyType":     r.get("antibodyType", ""),
-            "HostSpecies":      r.get("hostSpecies", ""),
-            "Isotype":          r.get("isotype", ""),
-            "Manufacturer":     r.get("manufacturer", ""),
-            "Name":             r.get("name", ""),
-            "OrderNumber":      r.get("orderNumber", ""),
-            "Species":          r.get("species", ""),
+            "Antibody": r.get("antibody", ""),
+            "AntibodyType": r.get("antibodyType", ""),
+            "HostSpecies": r.get("hostSpecies", ""),
+            "Isotype": r.get("isotype", ""),
+            "Manufacturer": r.get("manufacturer", ""),
+            "Name": r.get("name", ""),
+            "OrderNumber": r.get("orderNumber", ""),
+            "Species": r.get("species", ""),
         }
         for r in data.get("reagents", [])
     }
@@ -585,7 +607,7 @@ def build_bucket_lookup(data: dict) -> Dict[str, Dict[str, Any]]:
 # ------------------------------------------------------------------ #
 def get_antigen_clone_by_bucket(bucket_id: str,
                                 bucket_lookup: Dict[str, Dict[str, str]]
-                               ) -> Optional[Tuple[str, str]]:
+                                ) -> Optional[Tuple[str, str]]:
     """
     Fast O(1) lookup using the pre-built dictionary.
     Returns (antigen, clone)  or  None if the bucket is unknown.
@@ -598,7 +620,7 @@ def get_antigen_clone_by_bucket(bucket_id: str,
 
 def get_antigen_clone_by_reagent_id(reagent_uuid: str,
                                     data: dict
-                                   ) -> Optional[Tuple[str, str]]:
+                                    ) -> Optional[Tuple[str, str]]:
     """
     Directly fetch antigen / clone when you already have the reagent UUID.
     Scans the global reagent catalogue only once per call.
@@ -608,6 +630,7 @@ def get_antigen_clone_by_reagent_id(reagent_uuid: str,
             return reagent.get("antigen", "Unknown"), reagent.get("clone", "N/A")
     return None
 
+
 def process_experiment(experiment: dict[str, Any]) -> dict[str, Any]:
     """
     Process experiment data and return formatted dictionary.
@@ -616,31 +639,34 @@ def process_experiment(experiment: dict[str, Any]) -> dict[str, Any]:
     ElapsedTime: Wall-clock time from start to end (includes pauses)
     """
     return format_dict_headers({
-        "ExperimentName":  get_experiment_name(experiment),
-        "StartTime":       get_start_time(experiment),
-        "EndTime":         get_end_time(experiment),
-        "RunningTime":     get_running_time(experiment),
-        "ElapsedTime":     get_elapsed_time(experiment),
-        "UsedDiskSpace":   get_used_disk_space(experiment),
+        "ExperimentName": get_experiment_name(experiment),
+        "StartTime": get_start_time(experiment),
+        "EndTime": get_end_time(experiment),
+        "RunningTime": get_running_time(experiment),
+        "ElapsedTime": get_elapsed_time(experiment),
+        "UsedDiskSpace": get_used_disk_space(experiment),
     })
+
 
 def process_rois(roi: dict[str, Any]) -> dict[str, Any]:
     return format_dict_headers({
-        "ROIName":    get_roi_name(roi),
-        "Shape":      get_roi_shape_type(roi),
-        "Height":     get_roi_shape_height(roi),
-        "Width":      get_roi_shape_width(roi),
-        "Autofocus":  get_autofocus_method(roi),
+        "ROIName": get_roi_name(roi),
+        "Shape": get_roi_shape_type(roi),
+        "Height": get_roi_shape_height(roi),
+        "Width": get_roi_shape_width(roi),
+        "Autofocus": get_autofocus_method(roi),
     })
+
 
 def process_sample(sample: dict[str, Any]) -> dict[str, Any]:
     return format_dict_headers({
-        "SampleName":   get_sample_name(sample),
-        "Species":      get_sample_species(sample),
-        "Type":         get_sample_type(sample),
-        "Organ":        get_sample_organ(sample),
-        "Fixation":     get_sample_fixation_method(sample),
+        "SampleName": get_sample_name(sample),
+        "Species": get_sample_species(sample),
+        "Type": get_sample_type(sample),
+        "Organ": get_sample_organ(sample),
+        "Fixation": get_sample_fixation_method(sample),
     })
+
 
 def propagate_magnification(blocks):
     last_mag = None
@@ -653,6 +679,7 @@ def propagate_magnification(blocks):
         new_block["magnification"] = last_mag
         out.append(new_block)
     return out
+
 
 def process_block(block: dict[str, Any],
                   bucket_lookup: dict[str, Any]) -> list[dict[str, Any]]:
@@ -794,14 +821,14 @@ def process_all_procedures(data: dict[str, Any], bucket_lookup: dict[str, Any]) 
 if __name__ == "__main__":
     json_path = get_input_path()
     logger.info(f"Loading JSON: {json_path}")
-    data          = load_json(json_path)
+    data = load_json(json_path)
     bucket_lookup = build_bucket_lookup(data)
 
     # ---------- gather rows ------------------------------------
-    exp_rows    = [process_experiment(e) for e in data["experiments"]]
-    rack_rows   = [{"RackName": get_rack_name(r)} for r in data["racks"]]
-    roi_rows    = [process_rois(r)       for r in data["rois"]]
-    sample_rows = [process_sample(s)     for s in data["samples"]]
+    exp_rows = [process_experiment(e) for e in data["experiments"]]
+    rack_rows = [{"RackName": get_rack_name(r)} for r in data["racks"]]
+    roi_rows = [process_rois(r) for r in data["rois"]]
+    sample_rows = [process_sample(s) for s in data["samples"]]
 
     # Process all procedures into a dictionary keyed by procedure name
     procedures_dict = process_all_procedures(data, bucket_lookup)
@@ -812,10 +839,10 @@ if __name__ == "__main__":
 
     import pandas as pd
     with pd.ExcelWriter(out_xlsx, engine="xlsxwriter") as xls:
-        pd.DataFrame(exp_rows   ).to_excel(xls, sheet_name="Experiment", index=False)
-        pd.DataFrame(rack_rows  ).to_excel(xls, sheet_name="Racks",      index=False)
-        pd.DataFrame(roi_rows   ).to_excel(xls, sheet_name="ROIs",       index=False)
-        pd.DataFrame(sample_rows).to_excel(xls, sheet_name="Samples",    index=False)
+        pd.DataFrame(exp_rows).to_excel(xls, sheet_name="Experiment", index=False)
+        pd.DataFrame(rack_rows).to_excel(xls, sheet_name="Racks", index=False)
+        pd.DataFrame(roi_rows).to_excel(xls, sheet_name="ROIs", index=False)
+        pd.DataFrame(sample_rows).to_excel(xls, sheet_name="Samples", index=False)
 
         # Write each procedure to its own sheet
         for proc_name, block_rows in procedures_dict.items():
