@@ -9,7 +9,7 @@
 - Previously, all procedures were merged into a single "Blocks" sheet, which made it difficult to distinguish between experiments run on different regions of interest (ROIs)
 - Shared data (Experiment, Racks, ROIs, Samples) remains in common sheets
 
-### v1.x (Previous behaviour)
+### v1.x (Previous)
 - All procedure blocks were combined into a single "Blocks" sheet
 - This worked well for single-procedure experiments but did not clearly separate multiple procedures
 
