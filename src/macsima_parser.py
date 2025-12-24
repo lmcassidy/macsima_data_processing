@@ -6,6 +6,8 @@ from pathlib import Path
 from typing import Any, Union, IO, Dict, Tuple, Optional
 import logging
 
+__version__ = "2.0.0"
+
 # Basic configuration
 logging.basicConfig(
     level=logging.INFO,
@@ -46,29 +48,29 @@ def add_blank_lines_between_run_cycles(block_rows: list[dict]) -> list[dict]:
     """
     if not block_rows:
         return block_rows
-    
+
     result = []
     prev_run_cycle = None
-    
+
     for row in block_rows:
         current_run_cycle = row.get(format_column_header("RunCycleNumber"), "")
-        
+
         # If this is a new run cycle (and not the first row), add a blank line
-        if (prev_run_cycle is not None and 
-            current_run_cycle != "" and 
+        if (prev_run_cycle is not None and
+            current_run_cycle != "" and
             current_run_cycle != prev_run_cycle and
             prev_run_cycle != ""):
-            
+
             # Create a blank row with the same keys but empty values
             blank_row = {key: "" for key in row.keys()}
             result.append(blank_row)
-        
+
         result.append(row)
-        
+
         # Update previous run cycle number if this row has one
         if current_run_cycle != "":
             prev_run_cycle = current_run_cycle
-    
+
     return result
 
 
@@ -108,7 +110,7 @@ def load_json(json_file: JsonFile) -> Any:
             return json.load(f)
     else:                                   # file handle already open
         return json.load(json_file)
-    
+
 
 # --------------------------------------------------
 # Experiment info helper functions
@@ -161,7 +163,7 @@ def sanitise_sheet_name(name: str, max_length: int = 31) -> str:
 
     return sanitised.strip() or "Procedure"
 
-def get_rack_name(rack: list[dict[str, Any]]) -> str:
+def get_rack_name(rack: dict[str, Any]) -> str:
     """Returns the rack name."""
     return rack.get("name", "Unknown rack")
 
@@ -282,7 +284,7 @@ def get_roi_shape_height(roi):
     try:
         shape_data_str = roi.get('shape', {}).get('Data', '{}')
         shape_data = json.loads(shape_data_str)
-        
+
         # Handle different shape data formats
         if isinstance(shape_data, dict):
             # Rectangle ROI - has Height and Width keys
@@ -306,14 +308,14 @@ def get_roi_shape_height(roi):
                         # Handle flat list format [x1, y1, x2, y2, ...]
                         # This is more complex, skip for now
                         pass
-                
+
                 if y_coords:
                     height = max(y_coords) - min(y_coords)
                 else:
                     height = "N/A"
         else:
             height = "N/A"
-            
+
     except (json.JSONDecodeError, TypeError, AttributeError) as e:
         height = "Unknown height"
         logger.warning(f"Error decoding JSON or accessing height: {e}")
@@ -324,7 +326,7 @@ def get_roi_shape_width(roi):
     try:
         shape_data_str = roi.get('shape', {}).get('Data', '{}')
         shape_data = json.loads(shape_data_str)
-        
+
         # Handle different shape data formats
         if isinstance(shape_data, dict):
             # Rectangle ROI - has Height and Width keys
@@ -348,14 +350,14 @@ def get_roi_shape_width(roi):
                         # Handle flat list format [x1, y1, x2, y2, ...]
                         # This is more complex, skip for now
                         pass
-                
+
                 if x_coords:
                     width = max(x_coords) - min(x_coords)
                 else:
                     width = "N/A"
         else:
             width = "N/A"
-            
+
     except (json.JSONDecodeError, TypeError, AttributeError) as e:
         width = "Unknown width"
         logger.warning(f"Error decoding JSON or accessing width: {e}")
@@ -439,19 +441,19 @@ def get_block_magnification(block: dict[str, Any]) -> str:
 def get_erase_bleaching_energy(block: dict[str, Any]) -> list[dict[str, Any]] | str:
     if block.get("blockType") != "ProtocolBlockType_Erase":
         return "N/A"
-    
+
     results = []
     channels = block.get("photos", {})
-    
+
     for channel in channels.values():
         fluor = channel.get("fluorochromeType")
         energy = channel.get("bleachingEnergy")
         enabled = channel.get("isEnabled", False)
-        
+
         if enabled and fluor and fluor != "FluorochromeType_None" and energy:
             label = fluor.split("_")[-1]  # FluorochromeType_APC → APC
             results.append({"Channel": label, "bleachingEnergy": energy})
-    
+
     return results if results else "N/A"
 
 def get_erase_channel_info(block: dict[str, Any]) -> list[dict]:
@@ -467,7 +469,7 @@ def get_erase_channel_info(block: dict[str, Any]) -> list[dict]:
     out = []
     for dc in block.get("photos", {}).values():
         if (
-            dc.get("isEnabled") 
+            dc.get("isEnabled")
             and dc.get("fluorochromeType") != "FluorochromeType_None"
         ):
             label = dc["fluorochromeType"].split("_")[-1]   # …_APC → APC
@@ -479,7 +481,7 @@ def get_erase_channel_info(block: dict[str, Any]) -> list[dict]:
             )
     return out
 
-  
+
 def get_run_cycle_channel_info(block: dict, bucket_lookup: dict) -> list[dict]:
     """
     Build a run-cycle channel summary for one ProtocolBlockType_RunCycle block.
@@ -654,25 +656,25 @@ def propagate_magnification(blocks):
 
 def process_block(block: dict[str, Any],
                   bucket_lookup: dict[str, Any]) -> list[dict[str, Any]]:
-    
+
     def create_ordered_row(**values):
         """Create a row with columns in the desired order."""
         # Define the desired column order
         column_order = [
             "RunCycleNumber", "BlockType", "Antigen", "Channel", "Magnification",
-            "Clone", "DilutionFactor", "IncubationTime", "ReagentExposure", 
+            "Clone", "DilutionFactor", "IncubationTime", "ReagentExposure",
             "Coefficient", "ActualExposure", "ErasingMethod", "BleachingEnergy", "BleachingTime",
             "ValidatedFor", "Antibody", "AntibodyType", "HostSpecies", "Isotype",
             "Manufacturer", "OrderNumber", "Species", "Name"
         ]
-        
+
         # Create ordered dictionary with empty defaults
         ordered_row = {}
         for col in column_order:
             ordered_row[col] = values.get(col, "")
-        
+
         return ordered_row
-    
+
     # Common values for all block types
     block_type = get_block_type(block)
     magnification = get_block_magnification(block)
