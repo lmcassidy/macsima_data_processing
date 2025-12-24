@@ -1523,7 +1523,8 @@ def test_sanitise_sheet_name_custom_max_length():
     name = "This is a test name"
     result = mp.sanitise_sheet_name(name, max_length=10)
     assert len(result) <= 10
-    assert result == "This is a "
+    # Trailing space is stripped by the function
+    assert result == "This is a"
 
 
 def test_process_all_procedures_single():
