@@ -1,8 +1,7 @@
-from flask import Flask, request, send_file, render_template, flash, redirect, url_for, jsonify
+from flask import Flask, request, send_file, render_template, jsonify
 import os
 import tempfile
 from pathlib import Path
-from werkzeug.utils import secure_filename
 import logging
 
 # Import your existing parser
@@ -34,11 +33,11 @@ def get_user_friendly_error_message(exception, filename):
     """Convert technical exceptions into user-friendly error messages"""
     error_str = str(exception).lower()
     exception_type = type(exception).__name__
-    
+
     # Check exception type first for more accurate detection
     if exception_type == 'JSONDecodeError' or 'json' in error_str and ('decode' in error_str or 'parse' in error_str or 'expecting' in error_str):
         return f"The file '{filename}' is not valid JSON. Please check that the file contains properly formatted JSON data with correct syntax (matching braces, commas, quotes)."
-    
+
     elif exception_type == 'KeyError' or 'key' in error_str and ('error' in error_str or 'missing' in error_str):
         # Try to determine which field is missing
         missing_field = str(exception).strip("'\"")
@@ -54,22 +53,22 @@ def get_user_friendly_error_message(exception, filename):
             return f"The JSON file '{filename}' is missing the required 'samples' field. Your JSON must contain a 'samples' array with sample information."
         else:
             return f"The JSON file '{filename}' is missing required data fields. Your JSON must contain these top-level fields: 'experiments', 'procedures', 'racks', 'rois', and 'samples'."
-    
+
     elif 'memory' in error_str or 'size' in error_str:
         return f"The file '{filename}' is too large or complex to process. Please try with a smaller file or contact support."
-    
+
     elif 'permission' in error_str or 'access' in error_str:
         return "Unable to process the file due to system permissions. Please try again or contact support."
-    
+
     elif 'timeout' in error_str:
         return f"Processing '{filename}' took too long and timed out. Please try with a smaller file."
-    
+
     elif 'isoformat' in error_str or 'date' in error_str:
         return f"The file '{filename}' contains invalid date/time formats. Please ensure all datetime fields use ISO format (e.g., '2025-01-01T10:00:00Z')."
-    
+
     elif 'attribute' in error_str and 'get' in error_str:
         return f"The file '{filename}' has incorrect data types or structure. Please verify that objects contain the expected fields and data types."
-    
+
     else:
         # For unknown errors, provide a generic but helpful message
         return f"An unexpected error occurred while processing '{filename}'. The file may be corrupted or in an unsupported format. Please check the JSON structure and data types."
@@ -118,15 +117,15 @@ def upload_file():
             'error': True,
             'message': 'No file selected'
         }), 400
-    
+
     file = request.files['file']
-    
+
     if file.filename == '':
         return jsonify({
             'error': True,
             'message': 'No file selected'
         }), 400
-    
+
     if file and allowed_file(file.filename):
         temp_json_path = None
         excel_path = None
@@ -135,10 +134,10 @@ def upload_file():
             with tempfile.NamedTemporaryFile(delete=False, suffix='.json') as temp_json:
                 temp_json_path = temp_json.name
                 file.save(temp_json_path)
-                
+
             # Process the JSON file
             excel_path = process_json_to_excel(temp_json_path)
-            
+
             # Send the Excel file to user
             response = send_file(
                 excel_path,
@@ -146,7 +145,7 @@ def upload_file():
                 download_name=f"{Path(file.filename).stem}_report.xlsx",
                 mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             )
-            
+
             # Schedule cleanup after response is sent
             @response.call_on_close
             def cleanup():
@@ -157,9 +156,9 @@ def upload_file():
                         os.unlink(excel_path)
                 except Exception as e:
                     logger.warning(f"Failed to cleanup temporary files: {e}")
-            
+
             return response
-                
+
         except Exception as e:
             # Cleanup on error
             try:
@@ -167,13 +166,13 @@ def upload_file():
                     os.unlink(temp_json_path)
                 if excel_path and os.path.exists(excel_path):
                     os.unlink(excel_path)
-            except:
+            except Exception:
                 pass
-            
+
             # Provide user-friendly error messages
             error_message = get_user_friendly_error_message(e, file.filename)
             logger.error(f"Processing error for {file.filename}: {str(e)}")
-            
+
             # Always return JSON error response for upload endpoint
             return jsonify({
                 'error': True,
