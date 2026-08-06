@@ -1,6 +1,8 @@
 # MACSima Data Processing Makefile
 .PHONY: help test run frontend clean install lint format check-deps
 
+PYTHON ?= python3
+
 # Default target
 help: ## Show this help message
 	@echo "MACSima Data Processing Commands:"
@@ -9,17 +11,17 @@ help: ## Show this help message
 
 # Installation and setup
 install: ## Install Python dependencies
-	pip install -r requirements.txt
+	$(PYTHON) -m pip install -r requirements.txt
 
 check-deps: ## Check if required dependencies are installed
-	@python -c "import flask, pandas, xlsxwriter; print('✅ All dependencies installed')" || (echo "❌ Missing dependencies. Run 'make install'" && exit 1)
+	@$(PYTHON) -c "import flask, pandas, xlsxwriter; print('✅ All dependencies installed')" || (echo "❌ Missing dependencies. Run 'make install'" && exit 1)
 
 # Testing
-test: check-deps ## Run unit tests
-	pytest src/test_macsima_parser.py -v
+test: check-deps ## Run the complete test suite
+	pytest -v
 
-test-coverage: check-deps ## Run tests with coverage report
-	pytest src/test_macsima_parser.py --cov=src --cov-report=html --cov-report=term
+test-coverage: check-deps ## Run the complete test suite with coverage
+	pytest --cov=src --cov=app --cov-report=html --cov-report=term
 
 # Data processing
 run: check-deps ## Run parser on sample dataset (uses data/data\ MR.json)
@@ -43,7 +45,7 @@ frontend: check-deps ## Start the Flask web UI locally
 	@echo "🌐 Open http://localhost:5001 in your browser"
 	@echo "⏹️  Press Ctrl+C to stop"
 	@echo "ℹ️  Using port 5001 to avoid conflicts with AirPlay Receiver"
-	python -c "import app; app.app.run(debug=True, host='0.0.0.0', port=5001)"
+	$(PYTHON) -c "import app; app.app.run(debug=True, host='0.0.0.0', port=5001)"
 
 frontend-prod: check-deps ## Start Flask web UI in production mode with gunicorn
 	@echo "🚀 Starting MACSima Parser web interface (production)..."
@@ -75,10 +77,8 @@ clean: ## Clean up generated files
 # Development helpers
 dev-setup: install ## Complete development setup
 	@echo "🛠️  Setting up development environment..."
-	@command -v pip >/dev/null 2>&1 || (echo "❌ pip not found. Please install Python first." && exit 1)
-	pip install -r requirements.txt
-	@echo "Installing optional development dependencies..."
-	pip install pytest-cov black flake8 pylint 2>/dev/null || echo "⚠️  Some optional dev dependencies failed to install"
+	@$(PYTHON) -m pip --version >/dev/null 2>&1 || (echo "❌ pip not found. Please install Python first." && exit 1)
+	$(PYTHON) -m pip install -r requirements-dev.txt
 	@echo "✅ Development setup complete!"
 	@echo "💡 Try: make test, make run, or make frontend"
 
@@ -86,9 +86,9 @@ status: ## Show project status
 	@echo "📊 MACSima Data Processing Status"
 	@echo "================================"
 	@echo "📁 Project directory: $(PWD)"
-	@echo "🐍 Python version: $$(python --version 2>/dev/null || echo 'Not found')"
+	@echo "🐍 Python version: $$($(PYTHON) --version 2>/dev/null || echo 'Not found')"
 	@echo "📦 Dependencies:"
-	@python -c "import flask, pandas, xlsxwriter; print('  ✅ Flask, Pandas, xlsxwriter')" 2>/dev/null || echo "  ❌ Missing core dependencies"
+	@$(PYTHON) -c "import flask, pandas, xlsxwriter; print('  ✅ Flask, Pandas, xlsxwriter')" 2>/dev/null || echo "  ❌ Missing core dependencies"
 	@echo "📄 Sample data files: $$(ls -1 data/*.json 2>/dev/null | wc -l | tr -d ' ') JSON file(s)"
 	@echo "🧪 Test files: $$(find src -name '*test*.py' | wc -l | tr -d ' ') test file(s)"
 	@echo "🌐 Web interface: app.py"
