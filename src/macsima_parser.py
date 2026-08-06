@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any, Union, IO, Dict, Tuple, Optional
 import logging
 
-__version__ = "2.0.0"
+__version__ = "2.0.1"
 
 # Basic configuration
 logging.basicConfig(

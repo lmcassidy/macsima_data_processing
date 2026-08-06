@@ -171,6 +171,12 @@
             background: rgba(0, 102, 204, 0.2);
             text-decoration: none;
         }
+
+        .build-info {
+            margin-top: 24px;
+            color: #6c757d;
+            font-size: 12px;
+        }
         
         .processing {
             display: none;
@@ -266,6 +272,10 @@
                 Processing...
             </div>
         </form>
+
+        <footer class="build-info" aria-label="Application version">
+            MACSima Parser v{{ build.version }} · build {{ build.commit }}
+        </footer>
     </div>
 
     <script>

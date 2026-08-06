@@ -6,6 +6,7 @@ import logging
 
 # Import your existing parser
 from src.macsima_parser import (
+    __version__,
     load_json,
     build_bucket_lookup,
     process_experiment,
@@ -25,6 +26,15 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 ALLOWED_EXTENSIONS = {'json'}
+
+
+def get_build_info():
+    """Return public release metadata for the running application."""
+    commit = os.environ.get('RENDER_GIT_COMMIT', '').strip()
+    return {
+        'version': __version__,
+        'commit': commit[:7] if commit else 'local',
+    }
 
 
 def allowed_file(filename):
@@ -112,7 +122,13 @@ def process_json_to_excel(json_file_path):
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return render_template('index.html', build=get_build_info())
+
+
+@app.route('/health')
+def health():
+    """Report safe release metadata for deployment checks."""
+    return jsonify(status='ok', **get_build_info())
 
 
 @app.route('/upload', methods=['POST'])
