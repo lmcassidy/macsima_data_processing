@@ -4,6 +4,7 @@ Test script to verify Flask app returns proper JSON error responses
 """
 
 import json
+from io import BytesIO
 from app import app, get_user_friendly_error_message
 
 def test_error_message_function():
@@ -26,28 +27,22 @@ def test_error_message_function():
 
 def test_flask_app():
     """Test Flask app with test client"""
-    
     with app.test_client() as client:
-        # Test empty file
-        with open('data/test-samples/invalid_empty.json', 'rb') as f:
-            response = client.post('/upload', data={'file': (f, 'invalid_empty.json')})
-            print(f"Empty file response status: {response.status_code}")
-            if response.content_type == 'application/json':
-                data = response.get_json()
-                print(f"Empty file error message: {data.get('message')}")
-            else:
-                print(f"Response content type: {response.content_type}")
-                print(f"Response data: {response.get_data(as_text=True)[:200]}")
-        
-        # Test missing experiments file
-        with open('data/test-samples/missing_experiments.json', 'rb') as f:
-            response = client.post('/upload', data={'file': (f, 'missing_experiments.json')})
-            print(f"Missing experiments response status: {response.status_code}")
-            if response.content_type == 'application/json':
-                data = response.get_json()
-                print(f"Missing experiments error message: {data.get('message')}")
-            else:
-                print(f"Response content type: {response.content_type}")
+        invalid_response = client.post(
+            '/upload',
+            data={'file': (BytesIO(b''), 'invalid_empty.json')},
+        )
+        missing_response = client.post(
+            '/upload',
+            data={'file': (BytesIO(b'{"procedures": []}'), 'missing_experiments.json')},
+        )
+
+    assert invalid_response.status_code == 400
+    assert invalid_response.is_json
+    assert 'not valid JSON' in invalid_response.get_json()['message']
+    assert missing_response.status_code == 400
+    assert missing_response.is_json
+    assert "missing the required 'experiments' field" in missing_response.get_json()['message']
 
 if __name__ == '__main__':
     print("Testing error message function...")
