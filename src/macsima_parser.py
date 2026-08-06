@@ -184,7 +184,10 @@ def get_start_time(experiment: dict) -> str:
 
 def get_end_time(experiment: dict[str]) -> str:
     """Returns the experiment end time."""
-    raw: str = experiment.get("executionEndDateTime", "Unknown end time")
+    raw: str | None = experiment.get("executionEndDateTime")
+
+    if not raw:
+        return "N/A (not completed)"
 
     # Parse it so you know it’s valid
     dt = datetime.fromisoformat(raw.replace("Z", "+00:00"))

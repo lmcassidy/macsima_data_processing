@@ -328,6 +328,18 @@ def test_get_end_time():
     assert extracted == expected, f"Expected {expected}, but got {extracted}"
 
 
+def test_get_end_time_blank_for_incomplete_experiment():
+    """A blank end time means the experiment has not completed yet."""
+    experiment = {"executionEndDateTime": ""}
+
+    assert mp.get_end_time(experiment) == "N/A (not completed)"
+
+
+def test_get_end_time_missing_for_incomplete_experiment():
+    """A missing end time means the experiment has not completed yet."""
+    assert mp.get_end_time({}) == "N/A (not completed)"
+
+
 def test_get_running_time():
     """Test that the running time is extracted correctly."""
     extracted = mp.get_running_time(data['experiments'][0])
