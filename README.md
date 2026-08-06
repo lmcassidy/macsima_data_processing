@@ -1,6 +1,20 @@
 # MACSima Parser
 
 **MACSima Parser** helps you turn experiment data from a MACSima imaging run (in `.json` format) into a clear Excel file you can open in Excel, Google Sheets, or similar tools.
+
+## Version History
+
+### v2.0.0 (Current)
+- **Multiple procedures support**: Each procedure now gets its own Excel sheet, named after the procedure
+- Previously, all procedures were merged into a single "Blocks" sheet, which made it difficult to distinguish between experiments run on different regions of interest (ROIs)
+- Shared data (Experiment, Racks, ROIs, Samples) remains in common sheets
+
+### v1.x (Previous)
+- All procedure blocks were combined into a single "Blocks" sheet
+- This worked well for single-procedure experiments but did not clearly separate multiple procedures
+
+---
+
 You do not need to know Python to use this tool!
 Try the UI here: [https://macsima-parser.onrender.com/](https://macsima-parser.onrender.com/)
 
